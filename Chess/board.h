@@ -16,6 +16,9 @@ public:
   char endPosX;
   int endPosY;
 
+  bool isKingCastle = false;
+  bool isQueenCastle = false;
+
   Move();
   Move(char startX, int startY, char endX, int endY);
   Move(int startX, int startY, int endX, int endY);
@@ -76,6 +79,7 @@ public:
       vector<Move> queenMoves(bool isWhite, int xPos, int yPos);
       vector<Move> kingMoves(bool isWhite, int xPos, int yPos);
       vector<Move> getPieceMoves(int xPos, int yPos);
+      Move newMove(int xStart, int yStart, int xEnd, int yEnd);
       char pieceAtLocation(int xPos, int yPos);
       void reverseBoard();
 
