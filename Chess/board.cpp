@@ -5,17 +5,7 @@ using namespace std;
 
 
 //ToDo:
-//King movements
-//Check if we are in check, and if we are in check find all valid moves (FUCK ME THIS SIS ASS SADFJIA:SDJFDSA)
-//Check restricted recursive move list to ensure that it is valid
-  //Posible solution is to compare the current location to the king and normalize the kings direction from the current position, normalized king direction must mach the move direction (or inverse move direction, which is identical)
-//Create a function to check if a piece can take another piece
-//Create variables to store the location of each king position
 //Check all take checks use != isWhite not == isWhite 
-
-
-  //---But what about if the piece moving results in a check
-//This isn't possible due to checking if we are restricted for each piece, thus we cant
 
 
 
@@ -146,8 +136,37 @@ chessBoard::chessBoard()
   board.push_back("PPPPPPPP");
   board.push_back("RNBQKBNR");
 
+  //Store the location of both kings in easily accesible location
+  int tempX;
+  int tempY;
+  getKingPos(true, tempX, tempY);
+  kingPos[0][0] = tempX;
+  kingPos[0][1] = tempY;
+  getKingPos(false, tempX, tempY);
+  kingPos[1][0] = tempX;
+  kingPos[1][1] = tempY;
+
   //Generates the move list
-  regenerateMoveList();
+  regenerateMoveList(true);
+}
+
+void chessBoard::getKingPos(bool isWhite, int& kingPosX, int& kingPosY)
+{
+  int kingX = -1;
+  int kingY = -1;
+  for (int i = 0; i < 8 && kingX == -1; i++)
+  {
+    for (int j = 0; j < 8 && kingX == -1; j++)
+    {
+      if ((board[i][j] == isWhite ? 'K' : 'k'))
+      {
+        kingX = i;
+        kingY = j;
+      }
+    }
+  }
+  kingPosX = kingX;
+  kingPosY = kingY;
 }
 
 //Imports a board from a FEN string
@@ -239,11 +258,11 @@ void chessBoard::importFENBoard(string FEN)
   fullClock = stoi(FEN.substr(0, FEN.length()));
 
   //Generate the move list
-  regenerateMoveList();
+  regenerateMoveList(true);
 }
 
 //This checks every position on the board for a piece, lots of reduction to different functions, probably slows it down but makes it easy to understand
-void chessBoard::regenerateMoveList()
+void chessBoard::regenerateMoveList(bool isWhite)
 {
   moveList.clear();
   vector<Move> temp;
@@ -252,7 +271,7 @@ void chessBoard::regenerateMoveList()
   {
     for (int j = 0; j < 8; j++)
     {
-      if (board[i][j] != ' ')
+      if (board[i][j] != ' ' && isupper(board[i][j]) == isWhite)
       {
         //Get all the moves for that position
         temp = getPieceMoves(i, j);
@@ -261,14 +280,29 @@ void chessBoard::regenerateMoveList()
       }
     }
   }
+  //If in check
+  //Get the position of the king
+  int kingX;
+  int kingY;
+  getKingPos(isWhite, kingX, kingY);
+  ///And check if we are in check
+  if (inCheck(isWhite, kingX, kingY))
+  {
+    //If we are prune the movelist to only include valid moves
+    temp = checkLogicMoves(isWhite, temp);
+  }
+
+
 }
  
+//Checks if a given piece can take another piece
 bool chessBoard::canTake(int xPos, int yPos, int xPos2, int yPos2)
 {
   if (isupper(board[xPos][yPos]) == isupper(board[xPos2][yPos2])) return false;
   return true;
 }
 
+//Get the moves for the given piece
 vector<Move> chessBoard::getPieceMoves(int xPos, int yPos)
 {
   char piece = board[xPos][yPos];
@@ -688,14 +722,181 @@ vector<Move> chessBoard::queenMoves(bool isWhite, int xPos, int yPos)
   return moveList;
 }
 
-//Performs a check for all valid bishop moves from given position and color
-vector<Move> chessBoard::kingMoves(bool isWhite, int xPos, int yPos)
+//Function for the logic of when we are in check
+vector<Move> chessBoard::checkLogicMoves(bool isWhite, vector<Move> moveList)
 {
-  //Fuck me need to check all possible checking directions so you can't move into check
+  vector<vector<int>> checkingPieces = piecesGivingCheck(isWhite, kingPos[isWhite ? 0 : 1][0], kingPos[isWhite ? 0 : 1][1]);
+  vector<Move> restrictMoveList;
+  for (int i = 0; i < moveList.size(); i++) 
+    if ((moveList[i].getStartXInt() == kingPos[isWhite ? 0 : 1][0] && moveList[i].startPosY == kingPos[isWhite ? 0 : 1][1]))
+    {
+      restrictMoveList.push_back(moveList[i]);
+      moveList[i--] = moveList[moveList.size() - 1];
+      moveList.pop_back();
+    }
+    
+    
+    //If only 1 piece is putting the king in check then we can take it or block it
+  if (checkingPieces.size() == 1)
+  {
+    //figure out what piece is giving check
+    //If it is a knight we have to take or move
+    if (toupper(board[checkingPieces[0][0]][checkingPieces[0][1]]) == 'N')
+    {
+      //Remove all moves that aren't king moves or moving onto the piece the knight is on
+      for (int i = 0; i < moveList.size(); i++)
+      {    //If the ending pos = knight location
+        if ((moveList[i].getEndXInt() == checkingPieces[0][0] && moveList[i].endPosY == checkingPieces[0][1])) restrictMoveList.push_back(moveList[i]);
+      }
+    }
+    //If it is any other piece than any move that takes or positions itself inbetween the king and piece are valid
+    else 
+    {
+      vector<vector<int>> validSpaces = { {checkingPieces[0][0], checkingPieces[0][1] }};
+      int xOffset = -(kingPos[isWhite ? 0 : 1][0] - checkingPieces[0][0]) / abs(kingPos[isWhite ? 0 : 1][0] - checkingPieces[0][0]);
+      int yOffset = -(kingPos[isWhite ? 0 : 1][1] - checkingPieces[0][1]) / abs(kingPos[isWhite ? 0 : 1][1] - checkingPieces[0][1]);
+      int i = 1;
+      while ((kingPos[isWhite ? 0 : 1][0] + i * xOffset) != checkingPieces[0][0] && (kingPos[isWhite ? 0 : 1][1] + i * yOffset) != checkingPieces[0][1])
+      {
+        validSpaces.push_back({ kingPos[isWhite ? 0 : 1][0] + i * xOffset, (kingPos[isWhite ? 0 : 1][1] + i * yOffset) });
+        i++;
+      }
+      for (int i = 0; i < moveList.size(); i++)
+      {
+        //If a move is able to be played add it to the list
+        for (int j = 0; j < validSpaces.size(); j++)
+        {
+          if (validSpaces[j][0] == moveList[i].getEndXInt() && validSpaces[j][1] == moveList[i].endPosY)
+          {
+            restrictMoveList.push_back(moveList[i]);
+          }
+        }
+      }
+    }
+  }
+  return restrictMoveList;
+
+}
+
+//Finds the first piece from given location used to check if we are in check
+char chessBoard::firstPieceResursiveFind(bool isWhite, int xPos, int yPos, int xOffset, int yOffset)
+{
+  int offsetCounter = 1;
+  while (xPos + (offsetCounter * xOffset) >= 0 && xPos + (offsetCounter * xOffset) < 8 && yPos + (offsetCounter * yOffset) >= 0 && yPos + (offsetCounter * yOffset) < 8)
+  {
+    if (board[xPos + (offsetCounter * xOffset)][yPos + (offsetCounter * yOffset)] != ' ' && board[xPos + (offsetCounter * xOffset)][yPos + (offsetCounter * yOffset)] != isWhite ? 'W' : 'w') return board[xPos + (offsetCounter * xOffset)][yPos + (offsetCounter * yOffset)];
+    offsetCounter++;
+  }
+  return NULL;
+}
+
+//Checks if the king is in check in a given position
+//Doesn't actually check if the king is at the location to allow for a little bit of a cop out
+bool chessBoard::inCheck(bool isWhite, int xPos, int yPos)
+{
+  //Check knight locations
+  int knightMoves[8][2] = { {2,1}, {2,-1}, {-2, 1}, {-2, -1}, {1, 2}, {-1, 2}, {-1, -2}, {1, -2} };
+  for (int i = 0; i < 8; i++)
+  {
+    if (xPos + knightMoves[i][0] < 8 && xPos + knightMoves[i][0] > 0 && yPos + knightMoves[i][1] < 8 && yPos + knightMoves[i][1] > 0)
+      if (isupper(board[xPos + knightMoves[i][0]][yPos + knightMoves[i][1]]) != isWhite && isupper(board[xPos + knightMoves[i][0]][yPos + knightMoves[i][1]]) == 'N') return true;
+  }
+
+  int directionMoves[8][2] = { {1, 0}, {0, 1}, { -1, 0}, {0, -1}, {1, 1}, { -1, 1} , {-1, -1}, {1, -1} };
+  for (int i = 0; i < 8; i++)
+  {
+    //Get distance from current movement until edge of board
+    //For each square from current position to edge of board check for piece
+    for (int j = 1; j < 4; j++)
+    {
+      //If the piece is empty, continue in the loop
+      //Because we are using this to check if we can move to a square, we have to make sure to ignore the current players king
+      if (board[xPos + directionMoves[i][0]][yPos + directionMoves[i][1]] != ' ' && board[xPos + directionMoves[i][0]][yPos + directionMoves[i][1]] != isWhite ? 'K' : 'k')
+      {
+        //Once we enter this loop we will always either break or return true (break as in no checks in the current line, true as in this piece gives the current position check)
+        char pieceToCheck = board[xPos + directionMoves[i][0]][yPos + directionMoves[i][1]];
+        if (isupper(pieceToCheck) == isWhite) break;
+        //0-3 check rook
+        else if (i >= 0 && i <= 3 && toupper(pieceToCheck) == 'R') return true;
+        //4-7 check bishop
+        else if (i >= 4 && i <= 7 && toupper(pieceToCheck) == 'B') return true;
+        //6-7, first iteration check black pawn
+        else if (i >= 6 && i <= 7 && j == 1 && isWhite && toupper(pieceToCheck) == 'P') return true;
+        //4-5 first iteration check white pawn
+        else if (i >= 4 && i <= 5 && j == 1 && !isWhite && toupper(pieceToCheck) == 'P') return true;
+        //0-7 check queen
+        else if (i >= 0 && i <= 7 && toupper(pieceToCheck) == 'Q') return true;
+        //The given piece can not take along the current line
+        else break;
+      }
+    }
+  }
+  return false;
+}
+
+//Checks if the king is in check in a given position
+//Doesn't actually check if the king is at the location to allow for a little bit of a cop out
+vector<vector<int>> chessBoard::piecesGivingCheck(bool isWhite, int xPos, int yPos)
+{
+  //Check knight locations
+  vector<vector<int>> pieceLocations;
+  int knightMoves[8][2] = { {2,1}, {2,-1}, {-2, 1}, {-2, -1}, {1, 2}, {-1, 2}, {-1, -2}, {1, -2} };
+  for (int i = 0; i < 8; i++)
+  {
+    if (xPos + knightMoves[i][0] < 8 && xPos + knightMoves[i][0] > 0 && yPos + knightMoves[i][1] < 8 && yPos + knightMoves[i][1] > 0)
+      if (isupper(board[xPos + knightMoves[i][0]][yPos + knightMoves[i][1]]) != isWhite && isupper(board[xPos + knightMoves[i][0]][yPos + knightMoves[i][1]]) == 'N')
+      {
+        pieceLocations.push_back({ xPos + knightMoves[i][0], yPos + knightMoves[i][1]});
+      }
+  }
+
+  int directionMoves[8][2] = { {1, 0}, {0, 1}, { -1, 0}, {0, -1}, {1, 1}, { -1, 1} , {-1, -1}, {1, -1} };
+  for (int i = 0; i < 8; i++)
+  {
+    //Get distance from current movement until edge of board
+    //For each square from current position to edge of board check for piece
+    for (int j = 1; j < 4; j++)
+    {
+      //If the piece is empty, continue in the loop
+      //Because we are using this to check if we can move to a square, we have to make sure to ignore the current players king
+      if (board[xPos + directionMoves[i][0]][yPos + directionMoves[i][1]] != ' ' && board[xPos + directionMoves[i][0]][yPos + directionMoves[i][1]] != isWhite ? 'K' : 'k')
+      {
+        //Once we enter this loop we will always either break or return true (break as in no checks in the current line, true as in this piece gives the current position check)
+        char pieceToCheck = board[xPos + directionMoves[i][0]][yPos + directionMoves[i][1]];
+        if (isupper(pieceToCheck) == isWhite) break;
+        //0-3 check rook
+        else if (i >= 0 && i <= 3 && toupper(pieceToCheck) == 'R') pieceLocations.push_back({ xPos + directionMoves[i][0] , yPos + directionMoves[i][1] });
+        //4-7 check bishop
+        else if (i >= 4 && i <= 7 && toupper(pieceToCheck) == 'B') pieceLocations.push_back({ xPos + directionMoves[i][0] , yPos + directionMoves[i][1] });
+        //6-7, first iteration check black pawn
+        else if (i >= 6 && i <= 7 && j == 1 && isWhite && toupper(pieceToCheck) == 'P') pieceLocations.push_back({ xPos + directionMoves[i][0] , yPos + directionMoves[i][1] });
+        //4-5 first iteration check white pawn
+        else if (i >= 4 && i <= 5 && j == 1 && !isWhite && toupper(pieceToCheck) == 'P') pieceLocations.push_back({ xPos + directionMoves[i][0] , yPos + directionMoves[i][1] });
+        //0-7 check queen
+        else if (i >= 0 && i <= 7 && toupper(pieceToCheck) == 'Q') pieceLocations.push_back({ xPos + directionMoves[i][0] , yPos + directionMoves[i][1] });
+        //The given piece can not take along the current line
+        else break;
+      }
+    }
+  }
+  return pieceLocations;
 }
 
 
-
+//Performs a check for all valid bishop moves from given position and color
+vector<Move> chessBoard::kingMoves(bool isWhite, int xPos, int yPos)
+{
+  vector<Move> moveList;
+  //Fuck me need to check all possible checking directions so you can't move into check
+  int kingMoves[8][2] = { {1,0}, {-1,0}, {0, 1}, {0, -1}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1} };
+  for (int i = 0; i < 8; i++)
+  {
+    if (xPos + kingMoves[i][0] < 8 && xPos + kingMoves[i][0] > -1 && yPos + kingMoves[i][1] < 8 && yPos + kingMoves[i][1] > -1)
+    {
+      if (!inCheck(isWhite, xPos + kingMoves[i][0], yPos + kingMoves[i][1]) && (isupper(board[xPos + kingMoves[i][0]][yPos + kingMoves[i][1]]) != isWhite || board[xPos + kingMoves[i][0]][yPos + kingMoves[i][1]] == ' ')) moveList.push_back(Move(xPos, yPos, xPos + kingMoves[i][0], yPos + kingMoves[i][1]));
+    }
+  }
+}
 
 //Converts the board to FEN format and returns that string
 string chessBoard::exportFENBoard()
@@ -707,8 +908,6 @@ string chessBoard::exportFENBoard()
 //Returns the move list
 vector<Move> chessBoard::getMoveList()
 {
-
-
   return moveList;
 }
 

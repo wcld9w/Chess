@@ -14,7 +14,7 @@ public:
   int startPosY;
 
   char endPosX;
-  char endPosY;
+  int endPosY;
 
   Move();
   Move(char startX, int startY, char endX, int endY);
@@ -55,20 +55,26 @@ public:
       char enPassant[2];
       //What stores the move list
       vector<Move> moveList;
+      //Variable to store the position of each king
+      int kingPos[2][2];
 
       //Internal function called whenever a new board is loaded
-      void regenerateMoveList();
+      vector<vector<int>> piecesGivingCheck(bool isWhite, int xPos, int yPos);
+      void regenerateMoveList(bool isWhite);
       bool isPinned(bool isWhite, int xPos, int yPos);
       bool canTake(int xPos, int yPos, int xPos2, int yPos2);
+      void getKingPos(bool isWhite, int& kingPosX, int& kingPosY);
       vector<Move> recursiveMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY);
       vector<Move> recursiveRestrictedMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY, int kingX, int kingY);
+      bool inCheck(bool isWhite, int xPos, int yPos);
+      vector<Move> checkLogicMoves(bool isWhite, vector<Move> moveList);
+      char firstPieceResursiveFind(bool isWhite, int xPos, int yPos, int xOffset, int yOffset);
       vector<Move> bishopMoves(bool isWhite, int xPos, int yPos);
       vector<Move> rookMoves(bool isWhite, int xPos, int yPos);
       vector<Move> knightMoves(bool isWhite, int xPos, int yPos);
       vector<Move> pawnMoves(bool isWhite, int xPos, int yPos);
       vector<Move> queenMoves(bool isWhite, int xPos, int yPos);
       vector<Move> kingMoves(bool isWhite, int xPos, int yPos);
-      vector<Move> inCheck(bool isWhite, int xPos, int yPos);
       vector<Move> getPieceMoves(int xPos, int yPos);
 
 
