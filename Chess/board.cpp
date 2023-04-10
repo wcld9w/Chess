@@ -6,7 +6,8 @@ using namespace std;
 
 //ToDo:
 //Check all take checks use != isWhite not == isWhite 
-
+//Add castling check to king
+//Move x,y board accessers
 
 
 
@@ -152,6 +153,11 @@ chessBoard::chessBoard()
   regenerateMoveList(true);
 }
 
+char chessBoard::pieceAtLocation(int xPos, int yPos)
+{
+  return board[yPos][xPos];
+}
+
 void chessBoard::getKingPos(bool isWhite, int& kingPosX, int& kingPosY)
 {
   int kingX = -1;
@@ -160,10 +166,10 @@ void chessBoard::getKingPos(bool isWhite, int& kingPosX, int& kingPosY)
   {
     for (int j = 0; j < 8 && kingX == -1; j++)
     {
-      if ((board[i][j] == (isWhite ? 'K' : 'k')))
+      if ((pieceAtLocation(i,j) == (isWhite ? 'K' : 'k')))
       {
-        kingX = i;
-        kingY = j;
+        kingX = j;
+        kingY = i;
       }
     }
   }
@@ -272,6 +278,7 @@ void chessBoard::reverseBoard()
   {
     replaceBoard.push_back(board[i]);
   }
+
   board = replaceBoard;
 }
 
@@ -286,10 +293,10 @@ void chessBoard::regenerateMoveList(bool isWhite)
   {
     for (int j = 0; j < 8; j++)
     {
-      if (board[i][j] != ' ' && isupper(board[i][j]) == isWhite)
+      if (pieceAtLocation(i, j) != ' ' && isupper(pieceAtLocation(i, j)) == isWhite)
       {
         //Get all the moves for that position
-        temp = getPieceMoves(i, j);
+        temp = getPieceMoves(j, i);
         //Append it to the end
         moveList.insert(moveList.end(), temp.begin(), temp.end());
       }
@@ -313,14 +320,14 @@ void chessBoard::regenerateMoveList(bool isWhite)
 //Checks if a given piece can take another piece
 bool chessBoard::canTake(int xPos, int yPos, int xPos2, int yPos2)
 {
-  if (isupper(board[xPos][yPos]) == isupper(board[xPos2][yPos2])) return false;
+  if (isupper(pieceAtLocation(xPos, yPos)) == isupper(pieceAtLocation(xPos2, yPos2))) return false;
   return true;
 }
 
 //Get the moves for the given piece
 vector<Move> chessBoard::getPieceMoves(int xPos, int yPos)
 {
-  char piece = board[xPos][yPos];
+  char piece = pieceAtLocation(xPos, yPos);
   bool isWhite = isupper(piece);
   vector<Move> temp;
   //RNBQKP
@@ -368,17 +375,17 @@ bool chessBoard::isPinned(bool isWhite, int xPos, int yPos)
     //If pieces exist not pinned
     for (int i = kingY + ((kingY < yPos) ? 1 : -1); i != yPos; i = i + ((kingY < yPos) ? 1 : -1))
     {
-      if (board[xPos][i] != ' ') return false;
+      if (pieceAtLocation(xPos, i) != ' ') return false;
     }
     //Else check in ray towards opposite direction from king
     for (int i = yPos + ((kingY < yPos) ? 1 : -1); (i != 8) && i != -1; i = i + ((kingY < yPos) ? 1 : -1))
     {
       //for first piece on king, check if it is a piece that is 
-      if (board[xPos][i] != ' ')
+      if (pieceAtLocation(xPos, i) != ' ')
       {
         //A: not the same player
         //B: able to move multiple tiles in correct direction
-        if (isupper(board[xPos][i]) != isWhite && (toupper(board[xPos][i]) == 'Q' || toupper(board[xPos][i]) == 'R')) return true;
+        if (isupper(pieceAtLocation(xPos, i)) != isWhite && (toupper(pieceAtLocation(xPos, i)) == 'Q' || toupper(pieceAtLocation(xPos, i)) == 'R')) return true;
         return false;
       }   
     }
@@ -389,17 +396,17 @@ bool chessBoard::isPinned(bool isWhite, int xPos, int yPos)
     //If pieces exist not pinned
     for (int i = kingX + ((kingX < xPos) ? 1 : -1); i != xPos; i = i + ((kingX < xPos) ? 1 : -1))
     {
-      if (board[i][yPos] != ' ') return false;
+      if (pieceAtLocation(i, yPos) != ' ') return false;
     }
     //Else check in ray towards opposite direction from king
     for (int i = xPos + ((kingX < xPos) ? 1 : -1); (i != 8) && i != -1; i = i + ((kingX < xPos) ? 1 : -1))
     {
       //for first piece on king, check if it is a piece that is 
-      if (board[i][yPos] != ' ')
+      if (pieceAtLocation(i, yPos) != ' ')
       {
         //A: not the same player
         //B: able to move multiple tiles in correct direction
-        if (isupper(board[i][yPos]) != isWhite && (toupper(board[i][yPos]) == 'Q' || toupper(board[i][yPos]) == 'R')) return true;
+        if (isupper(pieceAtLocation(i, yPos)) != isWhite && (toupper(pieceAtLocation(i, yPos)) == 'Q' || toupper(pieceAtLocation(i, yPos)) == 'R')) return true;
         return false;
       }
     }
