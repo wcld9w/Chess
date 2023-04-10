@@ -76,6 +76,7 @@ public:
       vector<Move> queenMoves(bool isWhite, int xPos, int yPos);
       vector<Move> kingMoves(bool isWhite, int xPos, int yPos);
       vector<Move> getPieceMoves(int xPos, int yPos);
+      void reverseBoard();
 
 
     public:
