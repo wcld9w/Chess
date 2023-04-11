@@ -153,6 +153,30 @@ chessBoard::chessBoard()
   regenerateMoveList(true);
 }
 
+chessBoard::chessBoard(chessBoard inputChessBoard, Move moveToMake)
+{
+  inputChessBoard.copyFunction(kingPos, enPassant, halfClock, fullClock, canCastle, board, turn);
+  makeMove(moveToMake);
+}
+
+void chessBoard::copyFunction(int kingPosT[2][2],char enPassentT[2], int& halfClockT, int& fullClockT, bool canCastleT[4], vector<string>& boardT, bool& turnT)
+{
+  kingPosT[0][0] = kingPos[0][0];
+  kingPosT[0][1] = kingPos[0][1];
+  kingPosT[1][0] = kingPos[1][0];
+  kingPosT[1][1] = kingPos[1][1];
+  enPassentT[0] = enPassant[0];
+  enPassentT[1] = enPassant[1];
+  halfClockT = halfClock;
+  fullClockT = fullClock;
+  canCastleT[0] = canCastle[0];
+  canCastleT[1] = canCastle[1];
+  canCastleT[2] = canCastle[2];
+  canCastleT[3] = canCastle[3];
+  boardT = board;
+  turnT = turn;
+}
+
 char chessBoard::pieceAtLocation(int xPos, int yPos)
 {
   return board[yPos][xPos];

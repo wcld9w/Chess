@@ -81,14 +81,20 @@ public:
 
 
     public:
+      //Constructors
       chessBoard();
-
+      chessBoard(chessBoard inputChessBoard, Move moveToMake);
+      void copyFunction(int kingPos[2][2], char enPassentT[2], int& halfClock, int& fullClock, bool canCastle[4], vector<string>& board, bool& turn);
+      //Psuedo constructor
       void importFENBoard(string FEN);
 
+      //Get functions
       string exportFENBoard();
-
       vector<Move> getMoveList();
+     
 
+
+      //IDK
       void makeMove(Move move);
 
 
