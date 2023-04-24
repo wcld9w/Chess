@@ -3,14 +3,6 @@
 using namespace std;
 
 
-
-//ToDo:
-//Check all take checks use != isWhite not == isWhite 
-//Add castling check to king
-//Move x,y board accessers
-
-
-
 //Empty move constructor
 Move::Move()
 {
@@ -109,12 +101,32 @@ string Move::cleanString()
 {
   if (isKingCastle) return "O-O";
   if (isQueenCastle) return "O-O-O";
+  if (isPromotion) return(promotionString());
   string temp = "    ";
   temp[0] = startPosX;
   temp[1] = to_string(startPosY + 1)[0];
   temp[2] = endPosX;
   temp[3] = to_string(endPosY + 1)[0];
   return temp;
+}
+
+string Move::promotionString()
+{
+  string tempMove = "     \n";
+  string collection = "";
+  string promotionPieces = "QNRB";
+
+  tempMove[0] = startPosX;
+  tempMove[1] = to_string(startPosY + 1)[0];
+  tempMove[2] = endPosX;
+  tempMove[3] = to_string(endPosY + 1)[0];
+
+  for (int i = 0; i < 4; i++)
+  {
+    tempMove[4] = promotionPieces[i];
+    collection.append(tempMove);
+  }
+  return collection;
 }
 
 //Empty chessboard constructor, generates a board move 0
@@ -294,7 +306,7 @@ void chessBoard::importFENBoard(string FEN)
   reverseBoard();
 
   //Generate the move list
-  regenerateMoveList(true);
+  regenerateMoveList(turn);
 }
 
 void chessBoard::reverseBoard()
@@ -675,6 +687,8 @@ vector<Move> chessBoard::pawnMoves(bool isWhite, int xPos, int yPos)
 {
   int incY = isWhite ? 1 : -1;
   vector<Move> moveListTemp;
+
+  //Because the pawn cannot be pinned to the king in a way that would allow the pawn to promote while maintaining the pin we don't check for promotion on pinned moves 
   if (isPinned(isWhite, xPos, yPos))
   {
     //First find allied king
@@ -721,11 +735,18 @@ vector<Move> chessBoard::pawnMoves(bool isWhite, int xPos, int yPos)
   else
   {
     //First check if can move forward 1 space
-    if (pieceAtLocation(xPos,yPos + incY) == ' ')
+    if (pieceAtLocation(xPos,yPos + incY) == ' ') //We can always check one spot ahead because the pawn can never be at the final position in the board to where this isn't possible
     {
-      moveListTemp.push_back(newMove(xPos, yPos, xPos, yPos + incY));
+      //Check if the move places the piece at the end of the board, allowing promotion
+      if (yPos == (isWhite ? 6 : 1))
+      {
+        moveListTemp.push_back(newMove(xPos, yPos, xPos, yPos + incY));
+        moveListTemp[moveListTemp.size() - 1].isPromotion = true;
+      }
+      else moveListTemp.push_back(newMove(xPos, yPos, xPos, yPos + incY));
+      
       //Then 2 spaces
-      if(pieceAtLocation(xPos,yPos+2*incY) == ' ' && yPos == (isWhite?1:6)) moveListTemp.push_back(newMove(xPos, yPos, xPos, yPos + 2 * incY));
+      if(yPos == (isWhite ? 1 : 6) && pieceAtLocation(xPos,yPos+2*incY) == ' ' ) moveListTemp.push_back(newMove(xPos, yPos, xPos, yPos + 2 * incY));
     }
     //Then check takes
     if (xPos != 0 && toupper(pieceAtLocation(xPos - 1,yPos + incY)) != ' ' && isupper(pieceAtLocation(xPos - 1, yPos + incY)) != isWhite) moveListTemp.push_back(newMove(xPos, yPos, xPos - 1, yPos + incY));

@@ -16,8 +16,10 @@ public:
   char endPosX;
   int endPosY;
 
+  //Used for specific logic with whatever
   bool isKingCastle = false;
   bool isQueenCastle = false;
+  bool isPromotion = false;
 
   Move();
   Move(char startX, int startY, char endX, int endY);
@@ -30,6 +32,7 @@ public:
 
   void printMove();
   string cleanString();
+  string promotionString();
 
 };
 

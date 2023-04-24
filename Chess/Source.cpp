@@ -9,7 +9,7 @@ int main()
   chessBoard newBoard;
   system("cls");
   cout << "on to fen" << endl;
-  newBoard.importFENBoard("8/8/8/8/8/2p5/2KP4/BN6 w - - 0 1");
+  newBoard.importFENBoard("3k2bn/6p1/4P2P/8/8/8/8/8 b - - 0 1");
 
 
 
