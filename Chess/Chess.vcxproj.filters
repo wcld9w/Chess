@@ -21,9 +21,21 @@
     <ClCompile Include="board.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="randomChessAi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chessAiTemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="board.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="randomChessAi.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chessAiTemplate.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

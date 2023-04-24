@@ -1,4 +1,4 @@
-using namespace std;
+
 
 #ifndef CORDS
 #define CORDS
@@ -31,8 +31,9 @@ public:
   void setEndXInt(int set);
 
   void printMove();
-  string cleanString();
-  string promotionString();
+  std::string cleanString();
+  std::string promotionString();
+  std::vector<std::string> cleanStringVector();
 
 };
 
@@ -42,14 +43,16 @@ public:
 #define CHESSBOARD
 
   #include <string>
-  #include <iostream>
-  #include <vector>
-  #include <cstdlib>
+  #include <iostream> 
+  #include <vector> 
+  #include <cstdlib> 
+
+  #include <algorithm> //Used for sort
 
   class chessBoard
   {
     private:
-      vector<string> board;
+      std::vector<std::string> board;
       //turn = true means its whites turn
       bool turn;
       //True = can castle {whiteLeft, whiteRight, blackLeft, blackRight}
@@ -60,31 +63,34 @@ public:
       //Stores when a 2 long pawn move is made (only one possible enpessant target) 
       char enPassant[2];
       //What stores the move list
-      vector<Move> moveList;
+      std::vector<Move> moveList;
       //Variable to store the position of each king
       int kingPos[2][2];
 
       //Internal function called whenever a new board is loaded
-      vector<vector<int>> piecesGivingCheck(bool isWhite, int xPos, int yPos);
+      std::vector<std::vector<int>> piecesGivingCheck(bool isWhite, int xPos, int yPos);
       void regenerateMoveList(bool isWhite);
       bool isPinned(bool isWhite, int xPos, int yPos);
       bool canTake(int xPos, int yPos, int xPos2, int yPos2);
       void getKingPos(bool isWhite, int& kingPosX, int& kingPosY);
-      vector<Move> recursiveMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY);
-      vector<Move> recursiveRestrictedMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY, int kingX, int kingY);
+      std::vector<Move> recursiveMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY);
+      std::vector<Move> recursiveRestrictedMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY, int kingX, int kingY);
       bool inCheck(bool isWhite, int xPos, int yPos);
-      vector<Move> checkLogicMoves(bool isWhite, vector<Move> moveList);
+      std::vector<Move> checkLogicMoves(bool isWhite, std::vector<Move> moveList);
       char firstPieceResursiveFind(bool isWhite, int xPos, int yPos, int xOffset, int yOffset);
-      vector<Move> bishopMoves(bool isWhite, int xPos, int yPos);
-      vector<Move> rookMoves(bool isWhite, int xPos, int yPos);
-      vector<Move> knightMoves(bool isWhite, int xPos, int yPos);
-      vector<Move> pawnMoves(bool isWhite, int xPos, int yPos);
-      vector<Move> queenMoves(bool isWhite, int xPos, int yPos);
-      vector<Move> kingMoves(bool isWhite, int xPos, int yPos);
-      vector<Move> getPieceMoves(int xPos, int yPos);
+      std::vector<Move> bishopMoves(bool isWhite, int xPos, int yPos);
+      std::vector<Move> rookMoves(bool isWhite, int xPos, int yPos);
+      std::vector<Move> knightMoves(bool isWhite, int xPos, int yPos);
+      std::vector<Move> pawnMoves(bool isWhite, int xPos, int yPos);
+      std::vector<Move> queenMoves(bool isWhite, int xPos, int yPos);
+      std::vector<Move> kingMoves(bool isWhite, int xPos, int yPos);
+      std::vector<Move> getPieceMoves(int xPos, int yPos);
       Move newMove(int xStart, int yStart, int xEnd, int yEnd);
       char pieceAtLocation(int xPos, int yPos);
       void reverseBoard();
+
+      bool comparisonFunctionForMoveList(std::string a, std::string b);
+ 
 
 
     public:
@@ -93,16 +99,16 @@ public:
       chessBoard(chessBoard inputChessBoard, Move moveToMake);
       void copyFunction(int kingPos[2][2], char enPassentT[2], int& halfClock, int& fullClock, bool canCastle[4], vector<string>& board, bool& turn);
       //Psuedo constructor
-      void importFENBoard(string FEN);
+      void importFENBoard(std::string FEN);
 
       //Get functions
-      string exportFENBoard();
-      vector<Move> getMoveList();
-     
+      std::string exportFENBoard();
+      std::vector<Move> getMoveList();
+      std::vector<std::string> getSortedMoveListStrings();
 
 
       //IDK
-      void makeMove(Move move);
+      void makeMove(std::string move);
 
 
 

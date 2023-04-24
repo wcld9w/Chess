@@ -96,13 +96,13 @@ void Move::printMove()
   cout << cleanString() << endl;
 }
 
-//Returns the expected string for the move
-string Move::cleanString()
+//Returns the expected std::string for the move
+std::string Move::cleanString()
 {
   if (isKingCastle) return "O-O";
   if (isQueenCastle) return "O-O-O";
   if (isPromotion) return(promotionString());
-  string temp = "    ";
+  std::string temp = "    ";
   temp[0] = startPosX;
   temp[1] = to_string(startPosY + 1)[0];
   temp[2] = endPosX;
@@ -110,11 +110,37 @@ string Move::cleanString()
   return temp;
 }
 
-string Move::promotionString()
+std::vector<std::string> Move::cleanStringVector()
 {
-  string tempMove = "     \n";
-  string collection = "";
-  string promotionPieces = "QNRB";
+  std::vector<std::string> temp;
+  if (!isPromotion)
+  {
+    temp.push_back(cleanString());
+  }
+  else
+  {
+    std::string tempMove = "     \n";
+    std::string promotionPieces = "QNRB";
+
+    tempMove[0] = startPosX;
+    tempMove[1] = to_string(startPosY + 1)[0];
+    tempMove[2] = endPosX;
+    tempMove[3] = to_string(endPosY + 1)[0];
+
+    for (int i = 0; i < 4; i++)
+    {
+      tempMove[4] = promotionPieces[i];
+      temp.push_back(tempMove);
+    }
+  }
+  return temp;
+}
+
+std::string Move::promotionString()
+{
+  std::string tempMove = "     \n";
+  std::string collection = "";
+  std::string promotionPieces = "QNRB";
 
   tempMove[0] = startPosX;
   tempMove[1] = to_string(startPosY + 1)[0];
@@ -127,6 +153,23 @@ string Move::promotionString()
     collection.append(tempMove);
   }
   return collection;
+}
+
+bool chessBoard::comparisonFunctionForMoveList(std::string a, std::string b)
+{
+  if (a < b) return true;
+}
+
+std::vector<std::string> chessBoard::getSortedMoveListStrings()
+{
+  std::vector<std::string> moveListString;
+  for (int i = 0; i < moveList.size(); i++)
+  {
+    std::vector<std::string> curMoveStrings = moveList[i].cleanStringVector();
+    moveListString.insert(moveListString.end(), curMoveStrings.begin(), curMoveStrings.end());
+  }
+  sort(moveListString.begin(), moveListString.end(), comparisonFunctionForMoveList);
+  return moveListString;
 }
 
 //Empty chessboard constructor, generates a board move 0
@@ -173,7 +216,7 @@ chessBoard::chessBoard(chessBoard inputChessBoard, Move moveToMake)
   makeMove(moveToMake);
 }
 
-void chessBoard::copyFunction(int kingPosT[2][2],char enPassentT[2], int& halfClockT, int& fullClockT, bool canCastleT[4], vector<string>& boardT, bool& turnT)
+void chessBoard::copyFunction(int kingPosT[2][2],char enPassentT[2], int& halfClockT, int& fullClockT, bool canCastleT[4], std::vector<std::string>& boardT, bool& turnT)
 {
   kingPosT[0][0] = kingPos[0][0];
   kingPosT[0][1] = kingPos[0][1];
@@ -215,16 +258,16 @@ void chessBoard::getKingPos(bool isWhite, int& kingPosX, int& kingPosY)
   kingPosY = kingY;
 }
 
-//Imports a board from a FEN string
-void chessBoard::importFENBoard(string FEN)
+//Imports a board from a FEN std::string
+void chessBoard::importFENBoard(std::string FEN)
 {
   //Clear the board 
   board.clear();
   //Get the whole board from the FEN into the board variable
   bool loadingBoard = true;
-  string lineLoad = "        ";
+  std::string lineLoad = "        ";
   int curPos = 0;
-  string temp = "12345678";
+  std::string temp = "12345678";
   while (loadingBoard)
   {
     //If we reach end of a line in the FEN reset for next line
@@ -311,7 +354,7 @@ void chessBoard::importFENBoard(string FEN)
 
 void chessBoard::reverseBoard()
 {
-  vector<string> replaceBoard;
+  std::vector<std::string> replaceBoard;
   for (int i = board.size()-1; i >= 0; i--)
   {
     replaceBoard.push_back(board[i]);
@@ -325,7 +368,7 @@ void chessBoard::reverseBoard()
 void chessBoard::regenerateMoveList(bool isWhite)
 {
   moveList.clear();
-  vector<Move> temp;
+  std::vector<Move> temp;
   //For each position on the board
   for (int i = 0; i < 8; i++)
   {
@@ -364,11 +407,11 @@ bool chessBoard::canTake(int xPos, int yPos, int xPos2, int yPos2)
 }
 
 //Get the moves for the given piece
-vector<Move> chessBoard::getPieceMoves(int xPos, int yPos)
+std::vector<Move> chessBoard::getPieceMoves(int xPos, int yPos)
 {
   char piece = pieceAtLocation(xPos, yPos);
   bool isWhite = isupper(piece);
-  vector<Move> temp;
+  std::vector<Move> temp;
   //RNBQKP
   switch (toupper(piece))
   {
@@ -483,9 +526,9 @@ bool chessBoard::isPinned(bool isWhite, int xPos, int yPos)
 }
 
 //A simple function to make inline calls for a recursive move finding in a certain direction from a given 
-vector<Move> chessBoard::recursiveMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY)
+std::vector<Move> chessBoard::recursiveMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY)
 {
-  vector<Move> moveListTemp;
+  std::vector<Move> moveListTemp;
   //For a max of 8 distance
   for (int i = 1; i < 8; i++)
   {
@@ -510,9 +553,9 @@ vector<Move> chessBoard::recursiveMoveCheck(bool isWhite, int xPos, int yPos, in
   return moveListTemp;
 }
 
-vector<Move> chessBoard::recursiveRestrictedMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY, int kingX, int kingY)
+std::vector<Move> chessBoard::recursiveRestrictedMoveCheck(bool isWhite, int xPos, int yPos, int incX, int incY, int kingX, int kingY)
 {
-  vector<Move> moveListTemp;
+  std::vector<Move> moveListTemp;
   //The same as normal recursive check except first we check if the increments allow us to continue in the same line as the king
   //if the king and piece are in the same vertical column, only allow vertical movement
   if (kingX == xPos && incX != 0) return moveListTemp;
@@ -557,15 +600,15 @@ vector<Move> chessBoard::recursiveRestrictedMoveCheck(bool isWhite, int xPos, in
 }
 
 //Performs a check for all valid bishop moves from given position and color
-vector<Move> chessBoard::bishopMoves(bool isWhite, int xPos, int yPos)
+std::vector<Move> chessBoard::bishopMoves(bool isWhite, int xPos, int yPos)
 {
-  vector<Move> moveListTemp;
+  std::vector<Move> moveListTemp;
 
   //Logic for if we aren't pinned
   if (!isPinned(isWhite, xPos, yPos))
   {
     //upRight check
-    vector<Move> temp = recursiveMoveCheck(isWhite, xPos, yPos, 1, 1);
+    std::vector<Move> temp = recursiveMoveCheck(isWhite, xPos, yPos, 1, 1);
     moveListTemp.insert(moveListTemp.end(), temp.begin(), temp.end());
     //upLeft check
     temp = recursiveMoveCheck(isWhite, xPos, yPos, 1, -1);
@@ -584,7 +627,7 @@ vector<Move> chessBoard::bishopMoves(bool isWhite, int xPos, int yPos)
     int kingY = (isWhite ? kingPos[0][1] : kingPos[1][1]);
     //Logic to run the recursiveRestrictedMoveCheck function
     //upRight check
-    vector<Move> temp = recursiveRestrictedMoveCheck(isWhite, xPos, yPos, 1, 1, kingX, kingY);
+    std::vector<Move> temp = recursiveRestrictedMoveCheck(isWhite, xPos, yPos, 1, 1, kingX, kingY);
     moveListTemp.insert(moveListTemp.end(), temp.begin(), temp.end());
     //upLeft check
     temp = recursiveRestrictedMoveCheck(isWhite, xPos, yPos, 1, -1, kingX, kingY);
@@ -603,15 +646,15 @@ vector<Move> chessBoard::bishopMoves(bool isWhite, int xPos, int yPos)
 }
 
 //Performs a check for all valid bishop moves from given position and color
-vector<Move> chessBoard::rookMoves(bool isWhite, int xPos, int yPos)
+std::vector<Move> chessBoard::rookMoves(bool isWhite, int xPos, int yPos)
 {
-  vector<Move> moveListTemp;
+  std::vector<Move> moveListTemp;
 
   //Logic for if we aren't pinned
   if (!isPinned(isWhite, xPos, yPos))
   {
     //upRight check
-    vector<Move> temp = recursiveMoveCheck(isWhite, xPos, yPos, 1, 0);
+    std::vector<Move> temp = recursiveMoveCheck(isWhite, xPos, yPos, 1, 0);
     moveListTemp.insert(moveListTemp.end(), temp.begin(), temp.end());
     //upLeft check
     temp = recursiveMoveCheck(isWhite, xPos, yPos, -1, 0);
@@ -629,7 +672,7 @@ vector<Move> chessBoard::rookMoves(bool isWhite, int xPos, int yPos)
     int kingY = (isWhite ? kingPos[0][1] : kingPos[1][1]);
     //Logic to run the recursiveRestrictedMoveCheck function
     //upRight check
-    vector<Move> temp = recursiveRestrictedMoveCheck(isWhite, xPos, yPos, 0, 1, kingX, kingY);
+    std::vector<Move> temp = recursiveRestrictedMoveCheck(isWhite, xPos, yPos, 0, 1, kingX, kingY);
     moveListTemp.insert(moveListTemp.end(), temp.begin(), temp.end());
     //upLeft check
     temp = recursiveRestrictedMoveCheck(isWhite, xPos, yPos, 0, -1, kingX, kingY);
@@ -646,9 +689,9 @@ vector<Move> chessBoard::rookMoves(bool isWhite, int xPos, int yPos)
 }
 
 //Performs a check for all valid bishop moves from given position and color
-vector<Move> chessBoard::knightMoves(bool isWhite, int xPos, int yPos)
+std::vector<Move> chessBoard::knightMoves(bool isWhite, int xPos, int yPos)
 {
-  vector<Move> moveListTemp;
+  std::vector<Move> moveListTemp;
   //Knights can't move and maintain a pin
   if (isPinned(isWhite, xPos, yPos)) return moveListTemp;
   //Check all 8 knight moves.
@@ -683,10 +726,10 @@ Move chessBoard::newMove(int xStart, int yStart, int xEnd, int yEnd)
 }
 
 //Performs a check for all valid bishop moves from given position and color
-vector<Move> chessBoard::pawnMoves(bool isWhite, int xPos, int yPos)
+std::vector<Move> chessBoard::pawnMoves(bool isWhite, int xPos, int yPos)
 {
   int incY = isWhite ? 1 : -1;
-  vector<Move> moveListTemp;
+  std::vector<Move> moveListTemp;
 
   //Because the pawn cannot be pinned to the king in a way that would allow the pawn to promote while maintaining the pin we don't check for promotion on pinned moves 
   if (isPinned(isWhite, xPos, yPos))
@@ -768,10 +811,10 @@ vector<Move> chessBoard::pawnMoves(bool isWhite, int xPos, int yPos)
 
 //Performs a check for all valid queen moves from given position and color
 //Takes advantage of the fact that queen is just a bishop and rook combined
-vector<Move> chessBoard::queenMoves(bool isWhite, int xPos, int yPos)
+std::vector<Move> chessBoard::queenMoves(bool isWhite, int xPos, int yPos)
 {
-  vector<Move> moveListTemp;
-  vector<Move> temp;
+  std::vector<Move> moveListTemp;
+  std::vector<Move> temp;
   temp = rookMoves(isWhite, xPos, yPos);
   moveListTemp.insert(moveListTemp.end(), temp.begin(), temp.end());
   
@@ -782,10 +825,10 @@ vector<Move> chessBoard::queenMoves(bool isWhite, int xPos, int yPos)
 }
 
 //Function for the logic of when we are in check
-vector<Move> chessBoard::checkLogicMoves(bool isWhite, vector<Move> moveListTemp)
+std::vector<Move> chessBoard::checkLogicMoves(bool isWhite, std::vector<Move> moveListTemp)
 {
-  vector<vector<int>> checkingPieces = piecesGivingCheck(isWhite, kingPos[isWhite ? 0 : 1][0], kingPos[isWhite ? 0 : 1][1]);
-  vector<Move> restrictMoveList;
+  std::vector<std::vector<int>> checkingPieces = piecesGivingCheck(isWhite, kingPos[isWhite ? 0 : 1][0], kingPos[isWhite ? 0 : 1][1]);
+  std::vector<Move> restrictMoveList;
   for (int i = 0; i < moveListTemp.size(); i++)
     if ((moveListTemp[i].getStartXInt() == kingPos[isWhite ? 0 : 1][0] && moveListTemp[i].startPosY == kingPos[isWhite ? 0 : 1][1]))
     {
@@ -811,7 +854,7 @@ vector<Move> chessBoard::checkLogicMoves(bool isWhite, vector<Move> moveListTemp
     //If it is any other piece than any move that takes or positions itself inbetween the king and piece are valid
     else 
     {
-      vector<vector<int>> validSpaces = { {checkingPieces[0][0], checkingPieces[0][1] }};
+      std::vector<std::vector<int>> validSpaces = { {checkingPieces[0][0], checkingPieces[0][1] }};
       int xOffset = -(kingPos[isWhite ? 0 : 1][0] - checkingPieces[0][0]) / abs(kingPos[isWhite ? 0 : 1][0] - checkingPieces[0][0]);
       int yOffset = -(kingPos[isWhite ? 0 : 1][1] - checkingPieces[0][1]) / abs(kingPos[isWhite ? 0 : 1][1] - checkingPieces[0][1]);
       int i = 1;
@@ -899,10 +942,10 @@ bool chessBoard::inCheck(bool isWhite, int xPos, int yPos)
 
 //Checks if the king is in check in a given position
 //Doesn't actually check if the king is at the location to allow for a little bit of a cop out
-vector<vector<int>> chessBoard::piecesGivingCheck(bool isWhite, int xPos, int yPos)
+std::vector<std::vector<int>> chessBoard::piecesGivingCheck(bool isWhite, int xPos, int yPos)
 {
   //Check knight locations
-  vector<vector<int>> pieceLocations;
+  std::vector<std::vector<int>> pieceLocations;
   int knightMoves[8][2] = { {2,1}, {2,-1}, {-2, 1}, {-2, -1}, {1, 2}, {-1, 2}, {-1, -2}, {1, -2} };
   for (int i = 0; i < 8; i++)
   {
@@ -947,9 +990,9 @@ vector<vector<int>> chessBoard::piecesGivingCheck(bool isWhite, int xPos, int yP
 
 
 //Performs a check for all valid bishop moves from given position and color
-vector<Move> chessBoard::kingMoves(bool isWhite, int xPos, int yPos)
+std::vector<Move> chessBoard::kingMoves(bool isWhite, int xPos, int yPos)
 {
-  vector<Move> moveListTemp;
+  std::vector<Move> moveListTemp;
   //Fuck me need to check all possible checking directions so you can't move into check
   int kingMoves[8][2] = { {1,0}, {-1,0}, {0, 1}, {0, -1}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1} };
   for (int i = 0; i < 8; i++)
@@ -991,15 +1034,15 @@ vector<Move> chessBoard::kingMoves(bool isWhite, int xPos, int yPos)
   return moveListTemp;
 }
 
-//Converts the board to FEN format and returns that string
-string chessBoard::exportFENBoard()
+//Converts the board to FEN format and returns that std::string
+std::string chessBoard::exportFENBoard()
 {
 
   return "";
 }
 
 //Returns the move list
-vector<Move> chessBoard::getMoveList()
+std::vector<Move> chessBoard::getMoveList()
 {
   return moveList;
 }
